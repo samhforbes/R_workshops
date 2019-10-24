@@ -1,0 +1,296 @@
+---
+title: "Visualising and Testing Data"
+author: "Sam Forbes"
+date: "4 April 2018"
+output: 
+  ioslides_presentation:
+    highlight: 'espresso'
+    fig_height: 4
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T, eval = T, warning = F, prompt = T, comment = '')
+```
+
+## Load data
+```{r}
+setwd('//ueahome/eresssf5/gax18aku/data/Documents/R_Workshops')
+choc <- read.csv('choccies.csv', header = T, sep = ',')
+library(dplyr)
+library(reshape2)
+```
+```{r, echo =F}
+library(knitr)
+```
+
+## Tidy choccies
+```{r}
+choc_long <- choc %>%
+  melt(id = 1)
+```
+```{r, eval = F}
+head(choc_long)
+```
+```{r, echo = F}
+kable(head(choc_long))
+```
+
+## And rename
+* We can rename like I did before, with
+```{r, eval = F}
+names(choc_long)[c(2,3)] <- c('Choccy', 'Prop')
+```
+* or we can use dplyr::rename
+```{r}
+choc_long <- choc_long %>%
+  rename(Choccy = variable, Prop = value)
+```
+
+## Renaming
+* Which gives us:
+```{r, eval = F}
+head(choc_long)
+```
+```{r, echo = F}
+kable(head(choc_long))
+```
+
+## Plotting our results
+* Just like othe*R* things, there is more than one way to do this
+* The two main ways are base R (like our plot() function earlier) and ggplot2
+* ggplot2 is basically awesome
+* There are other underrated alternatives like lattice and ggplot2::qplot
+
+## Base R
+* really easy to use, horrible to get perfect
+* Great for quick summaries
+```{r}
+boxplot(Prop ~ Choccy, data = choc_long)
+```
+
+## ggplot2
+* ggplot is fully customisable and well-documented (and pretty)
+* But we need to learn the syntax
+* It's done by layers, where we add a layer each time
+* Start by defining ggplot
+
+## ggplot2
+```{r}
+library(ggplot2)
+cplot <- ggplot(data = choc_long)
+```
+
+## ggplot2
+* We need to add aesthetics to make sure it maps properly
+```{r}
+cplot <- ggplot(data = choc_long,
+                aes(x = Choccy, y = Prop))
+```
+
+## ggplot2
+* Then we add our layers
+* We can do this with either stat_summary() or geom_xxx()
+* In most cases stat_summary is what you want
+* Except boxplots or histograms basically!
+
+## ggplot2
+```{r}
+cplot + geom_boxplot()
+```
+
+## How about by group?
+```{r}
+cplot <- ggplot(data = choc_long,
+                aes(x = Group, y = Prop)) +
+  geom_boxplot()
+cplot
+```
+
+## What if we want more???
+* We can overwrite the aesthetics in additional layers if we want to
+* This is super useful for plotting things like model fit vs data
+* Gives us a lot of flexibility
+
+## Adding layers
+```{r}
+cplot + stat_summary(aes(colour = Choccy, shape = Choccy),
+                     geom = 'point', fun.y = 'mean')
+```
+
+## Adding layers
+```{r}
+cplot + stat_summary(aes(colour = Choccy, shape = Choccy),
+                     geom = 'point', fun.y = 'mean',
+                     size = 4)
+```
+
+## Adding layers
+```{r}
+cplot + stat_summary(aes(colour = Choccy, shape = Choccy),
+                     geom = 'point', fun.y = 'mean',
+                     size = 4) + 
+  theme_dark()
+```
+
+## Adding layers
+```{r}
+cplot + stat_summary(aes(colour = Choccy, shape = Choccy),
+                     geom = 'point', fun.y = 'mean',
+                     size = 4) + 
+  theme_classic()
+```
+
+## Modern plotting styles
+```{r}
+cplot <- ggplot(data = choc_long,
+                aes(x = Group, y = Prop)) +
+  geom_violin() + theme_classic()
+cplot
+```
+
+## Modern plotting styles
+```{r}
+cplot <- ggplot(data = choc_long,
+                aes(x = Group, y = Prop, colour = Group, fill = Group)) +
+  geom_violin() + theme_classic()
+cplot
+```
+
+## Great data visualisation
+```{r}
+cplot <- ggplot(data = choc_long,
+                aes(x = Group, y = Prop, colour = Group, fill = Group)) +
+  geom_violin(alpha = 0.2) + 
+  stat_summary(geom = 'pointrange', fun.data = 'mean_se') + 
+  theme_classic() +
+  ylab('Proportion') +
+  xlab('Research Group')
+```
+
+## Great data visualisation
+```{r}
+cplot
+```
+
+
+## Student's Sleep Data
+* In 1905, Cushny and Peebles looked at the effect of two soporific drugs on 10 patients
+* This was famously re-analyzed by *Student* in 1908, introducing what we now know as the *t*-test
+* Fun fact, *Student* was William Sealy Gosset, who was working for Guinness at the time, and the test was used to measure the quality of the beer
+* This is a built-in dataset in R
+
+## Student's Sleep Data
+```{r}
+sleep <- sleep
+```
+```{r, eval = F}
+head(sleep)
+```
+```{r, echo = F}
+kable(head(sleep))
+```
+
+## Student's sleep data
+* *extra* is the increase in hours of sleep
+* *group* is the drug given (poorly named)
+* *ID* is the patient ID
+* How would we describe this???
+
+## Check our data
+* As mentioned last week, you should always check the type of data
+* You can do this by hovering over each column in View(sleep)
+* What are we looking at?
+
+## T-test in R
+* Each function has a default behavior
+* t.test(x, y = NULL,
+       alternative = c("two.sided", "less", "greater"),
+       mu = 0, paired = FALSE, var.equal = FALSE,
+       conf.level = 0.95, ...)
+* This example appears in the official R examples, and they forget to pair the data!
+       
+## T-test in R
+* We want to use the function interface almost all of the time, unless it is comparing to mu
+* That is: y ~ x - remember we used that in dcast()
+```{r}
+t.test(extra ~ group, paired = T, data = sleep)
+```
+
+## Plot our results
+* What kind of data visualisation is appropriate here?
+
+## Plot our results
+* What kind of data visualisation is appropriate here?
+* I'm going to say a boxplot, partly because I don't like barplots
+* You can always play with other options
+
+## Plot our results
+```{r}
+splot <- ggplot(data = sleep,
+                aes(x = group, y = extra)) +
+  geom_boxplot() +
+  theme_classic()
+```
+
+## Plot our results
+```{r}
+splot
+```
+
+## Add significance marks?
+```{r}
+splot + geom_text(x = 1.5, y = 4.5, label = '**', size = 10)
+```
+
+## Plant growth data
+* Results of an experiment comparing weight of plants under 3 conditions
+```{r}
+PlantGrowth <- PlantGrowth
+```
+```{r, eval=F}
+head(PlantGrowth)
+```
+```{r, echo = F}
+kable(head(PlantGrowth))
+```
+
+## Plant growth data
+* Three factors, so we need to do an anova
+* Important to note that an anova *is* a linear regression
+* Again we use formula syntax
+* We'll come back to that...
+
+## Doing a linear model
+* There are pure anova ways of doing this in other packages
+* For us, it is easiest to run it just like a linear model
+* We can use the same syntax as in a *t*-test
+```{r}
+pgmod <- lm(weight ~ group, data = PlantGrowth)
+```
+
+## Linear model
+```{r}
+summary(pgmod)
+```
+
+## Anova table
+* Rather than contrasting, we may wish to see the anova table
+```{r}
+anova(pgmod)
+```
+
+## Plotting
+* Can you plot these data?
+
+## Plotting
+```{r}
+pgplot <- ggplot(PlantGrowth, 
+                 aes(x = group, y = weight, fill = group)) +
+  geom_boxplot(alpha = 0.4) +
+  theme_classic()
+```
+
+## Plotting
+```{r}
+pgplot
+```

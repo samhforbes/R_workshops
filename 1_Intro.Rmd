@@ -1,0 +1,281 @@
+---
+title: "Introduction to R"
+author: "Sam Forbes"
+date: "19 March 2018"
+output: 
+  ioslides_presentation:
+    highlight: 'espresso'
+    fig_height: 4
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T, eval = T, warning = F, prompt = T, comment = '')
+```
+
+## What is R?
+<img src="cars.jpg"; style="max-width:800px;float:left;">
+
+## What is R?
+* A calculator:
+```{r}
+2+2
+```
+
+## What is R?
+* A calculator
+* A coding language:
+```{r}
+var <- c(1,2,3,4,5,6)
+length(var)
+```
+
+## What is R?
+* A calculator
+* A coding language
+* A statistics and graphical environment:
+```{r, fig.height=3}
+plot(var)
+```
+
+## RStudio
+* Just like excel, or SPSS, or atom
+* Integrated platform for writing and running R code
+* Also a text editor, latex integration, version control, notebook, etc
+* Has scripts (top left) and console (bottom left) - try to use scripts for saveable and reproducible code
+* I even wrote this powerpoint in RStudio!!!
+
+## Types of data
+* Characters or strings
+* Numbers or vectors or doubles
+* Matrix or data frame
+```{r}
+typeof(var)
+```
+
+## Types of Data
+```{r}
+var <- as.character(var)
+typeof(var)
+var
+```
+
+## Messing with data
+```{r}
+var[4]
+```
+```{r}
+y <- var[2:4]
+y
+```
+
+## Packages etc
+* Important thing about R is that everything can be googled
+* Lots of libraries that mean you can do anything under the sun
+* Most packages are on Github so you can even see how they are made!
+* There are packages already for *most* things you want to do
+
+## Some Rules
+* Data needs to be *tidy*. This means:
+    - Each row is an *observation*
+    - Each variable is a *column*
+    - Data should be in a *single dataset*
+
+## How to R
+* We assign variables with <- (or =)...
+```{r}
+x <- 5
+x
+x < 2
+x == 5
+```
+
+## How to R
+```{r}
+y <- 1:10
+y/x
+y*x
+y^x
+#comments
+```
+
+## Messy Data
+```{r, echo = T}
+level <- c('Undergrad', 'Graduate')
+males <- c(7,2)
+females <- c(1,5)
+lab <- data.frame(level,males,females)
+```
+
+## Messy data
+```{r, echo = T, eval = F}
+head(lab)
+```
+```{r, echo =F}
+library(knitr)
+kable(lab, caption = 'Lab Members')
+```
+
+* How many variables do we actually have here???
+
+## Tidy data
+```{r, echo = T}
+library(reshape2)
+lab2 <- melt(lab, id = 1, measured = 2:3)
+names(lab2)[c(2,3)] = c('Gender', 'N')
+```
+```{r, eval = F}
+head(lab2)
+```
+
+## Tidy data
+```{r, echo = F}
+kable(lab2, caption = 'Lab Members')
+```
+
+
+## Tidy data
+```{r, echo = F}
+kable(lab2, caption = 'Lab Members')
+```
+
+* Always aim for this - most R functions require it!
+
+## Putting it back
+* Sometime we do want a wide format for our own summaries etc
+* Can still use reshape2's dcast
+```{r}
+lab_short <- dcast(lab2,  level ~ Gender)
+```
+```{r, eval = F}
+head(lab_short)
+```
+
+## Let's look
+```{r, echo = F}
+kable(lab_short, caption = 'Lab Members')
+```
+
+## Chocolate survey
+* Time for some "real" data
+* I took a survey of prop of people in each research group who like each chocolate
+* We need to open the file and get it out and take a look
+
+## Chocolate survey
+```{r}
+setwd('//ueahome/eresssf5/gax18aku/data/Documents/R_Workshops')
+choc <- read.csv('choccies.csv', header = T, sep = ',')
+```
+```{r, eval = F}
+View(choc)
+```
+```{r, echo = F}
+kable(choc)
+```
+
+## What can we do with this?
+```{r}
+library(dplyr)
+```
+
+## What can we do with this?
+```{r}
+summary(choc)
+```
+
+## What can we do with this?
+* What if we are only interested in 2 choccies?
+```{r}
+ctwo <- select(choc, boost, bounty)
+```
+```{r, eval = F}
+head(ctwo)
+```
+```{r, echo = F}
+kable(ctwo)
+```
+
+## What can we do with this?
+* Whooops! We left out our groups variable!
+* We can indicate a range with :
+```{r}
+ctwo <- select(choc, Group:bounty)
+```
+```{r, eval = F}
+head(ctwo)
+```
+```{r, echo = F}
+kable(ctwo)
+```
+
+## What can we do with this?
+* Suppose we only want some rows
+* Perhaps we (Jordan) hypothesize that the only groups worth considering are those that rate Boost bars
+```{r}
+cfil <- filter(choc, boost >= .5)
+```
+```{r, eval = F}
+head(cfil)
+```
+```{r, echo = F}
+kable(cfil)
+```
+
+## What (else) can we do with this?
+* OK, but maybe Jordan doesn't want to base everything on one type of choccy
+* So we need to arrange it to see his views all different choccies, arranged by boost
+```{r}
+carr <- arrange(choc, desc(boost))
+```
+```{r, eval = F}
+head(carr)
+```
+```{r, echo = F}
+kable(carr)
+```
+
+## Adding columns
+* Lion is pretty important to Jordan as well
+* We need to add a column that will give him a better understanding
+```{r}
+cmut <- mutate(choc, weighting = (boost + lion)/2)
+cmut <- arrange(cmut, desc(boost))
+```
+```{r, eval = F}
+head(cmut)
+```
+```{r, echo = F}
+kable(cmut)
+```
+
+## Piping
+* What we just did works, but isn't very elegant...
+* Rather than going step by step, it's better to put it all together
+* The operator %>% does this
+* Any function with a f(x,y) argument can be written x %>% f(y)
+
+## Piping
+```{r}
+cmut <- choc %>%
+  mutate(weighting = (boost + lion)/2) %>%
+  arrange(desc(boost))
+```
+```{r, eval = F}
+head(cmut)
+```
+```{r, echo = F}
+kable(cmut)
+```
+
+## A note
+* It's important to remember that in R, there are many ways of doing things
+* These functions are the most user-friendly for this, but there are other options!
+* Our filtered argument above could instead be written:
+```{r, eval = F}
+cfil <- choc[choc$boost >= 0.5]
+```
+* Play with some of the options!
+
+## Back to choccies
+* So we can do cool stuff with the choccies data, but it's not *tidy*
+* What should it look like?
+* Can you make it look like that???
