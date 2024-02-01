@@ -1,7 +1,7 @@
 ---
 title: "Introduction to R"
 author: "Sam Forbes"
-date: "19 March 2018"
+date: 
 output: 
   ioslides_presentation:
     highlight: 'espresso'
@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = T, eval = T, warning = F, prompt = T, comment = '')
 ```
 
 ## What is R?
-<img src="cars.jpg"; style="max-width:800px;float:left;">
+![](cars.jpg){#id .class width=70% height=70%}
 
 ## What is R?
 * A calculator:
@@ -63,6 +63,7 @@ var
 ```{r}
 var[4]
 ```
+
 ```{r}
 y <- var[2:4]
 y
@@ -107,9 +108,7 @@ lab <- data.frame(level,males,females)
 ```
 
 ## Messy data
-```{r, echo = T, eval = F}
-head(lab)
-```
+
 ```{r, echo =F}
 library(knitr)
 kable(lab, caption = 'Lab Members')
@@ -118,14 +117,16 @@ kable(lab, caption = 'Lab Members')
 * How many variables do we actually have here???
 
 ## Tidy data
-```{r, echo = T}
-library(reshape2)
-lab2 <- melt(lab, id = 1, measured = 2:3)
-names(lab2)[c(2,3)] = c('Gender', 'N')
+```{r, echo = T, message=F}
+library(dplyr)
+library(tidyr)
+library(readr)
+lab2 <- pivot_longer(lab, 
+                     cols = c(males, females), 
+                     names_to = 'gender', 
+                     values_to = 'number')
 ```
-```{r, eval = F}
-head(lab2)
-```
+
 
 ## Tidy data
 ```{r, echo = F}
@@ -142,12 +143,11 @@ kable(lab2, caption = 'Lab Members')
 
 ## Putting it back
 * Sometime we do want a wide format for our own summaries etc
-* Can still use reshape2's dcast
+* Can still use pivot
 ```{r}
-lab_short <- dcast(lab2,  level ~ Gender)
-```
-```{r, eval = F}
-head(lab_short)
+lab_short <- pivot_wider(lab2, 
+                         names_from = gender, 
+                         values_from = number)
 ```
 
 ## Let's look
@@ -162,19 +162,15 @@ kable(lab_short, caption = 'Lab Members')
 
 ## Chocolate survey
 ```{r}
-setwd('//ueahome/eresssf5/gax18aku/data/Documents/R_Workshops')
-choc <- read.csv('choccies.csv', header = T, sep = ',')
+choc <- read_csv('choccies.csv')
 ```
+
 ```{r, eval = F}
 View(choc)
 ```
+
 ```{r, echo = F}
 kable(choc)
-```
-
-## What can we do with this?
-```{r}
-library(dplyr)
 ```
 
 ## What can we do with this?
@@ -187,9 +183,8 @@ summary(choc)
 ```{r}
 ctwo <- select(choc, boost, bounty)
 ```
-```{r, eval = F}
-head(ctwo)
-```
+
+
 ```{r, echo = F}
 kable(ctwo)
 ```
@@ -200,49 +195,43 @@ kable(ctwo)
 ```{r}
 ctwo <- select(choc, Group:bounty)
 ```
-```{r, eval = F}
-head(ctwo)
-```
+
+
 ```{r, echo = F}
 kable(ctwo)
 ```
 
 ## What can we do with this?
 * Suppose we only want some rows
-* Perhaps we (Jordan) hypothesize that the only groups worth considering are those that rate Boost bars
+* Perhaps we (me) hypothesize that the only groups worth considering are those that rate Boost bars
 ```{r}
 cfil <- filter(choc, boost >= .5)
 ```
-```{r, eval = F}
-head(cfil)
-```
+
 ```{r, echo = F}
 kable(cfil)
 ```
 
 ## What (else) can we do with this?
-* OK, but maybe Jordan doesn't want to base everything on one type of choccy
-* So we need to arrange it to see his views all different choccies, arranged by boost
+* OK, but maybe we don;t want to base everything on one type of choccy
+* So we need to arrange it to see views all different choccies, arranged by boost
 ```{r}
 carr <- arrange(choc, desc(boost))
 ```
-```{r, eval = F}
-head(carr)
-```
+
 ```{r, echo = F}
 kable(carr)
 ```
 
 ## Adding columns
-* Lion is pretty important to Jordan as well
-* We need to add a column that will give him a better understanding
+* Lion is pretty important to us as well
+* We need to add a column that will give us a better understanding
 ```{r}
-cmut <- mutate(choc, weighting = (boost + lion)/2)
+cmut <- mutate(choc, 
+               weighting = (boost + lion)/2)
 cmut <- arrange(cmut, desc(boost))
 ```
-```{r, eval = F}
-head(cmut)
-```
+
 ```{r, echo = F}
 kable(cmut)
 ```
@@ -259,9 +248,7 @@ cmut <- choc %>%
   mutate(weighting = (boost + lion)/2) %>%
   arrange(desc(boost))
 ```
-```{r, eval = F}
-head(cmut)
-```
+
 ```{r, echo = F}
 kable(cmut)
 ```
