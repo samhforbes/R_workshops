@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = T, eval = T, warning = F, prompt = T, comment = '')
 
 ## Load data
 ```{r}
-setwd('//ueahome/eresssf5/gax18aku/data/Documents/R_Workshops')
+
 choc <- read.csv('choccies.csv', header = T, sep = ',')
 library(dplyr)
 library(reshape2)
